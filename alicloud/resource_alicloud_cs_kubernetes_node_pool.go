@@ -101,6 +101,13 @@ func resourceAlicloudCSKubernetesNodePool() *schema.Resource {
 				Default:      40,
 				ValidateFunc: validation.IntBetween(20, 32768),
 			},
+			"system_disk_performance_level": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				ValidateFunc:     validation.StringInSlice([]string{"PL0", "PL1", "PL3"}, false),
+				DiffSuppressFunc: csForceUpdateSuppressFunc,
+			},
 			"image_id": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -143,6 +150,11 @@ func resourceAlicloudCSKubernetesNodePool() *schema.Resource {
 						"auto_snapshot_policy_id": {
 							Type:     schema.TypeString,
 							Optional: true,
+						},
+						"performance_level": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							DiffSuppressFunc: csForceUpdateSuppressFunc,
 						},
 					},
 				},
@@ -421,6 +433,11 @@ func resourceAlicloudCSNodePoolUpdate(d *schema.ResourceData, meta interface{}) 
 		args.ScalingGroup.SystemDiskSize = int64(d.Get("system_disk_size").(int))
 	}
 
+	if d.HasChange("system_disk_performance_level") {
+		update = true
+		args.ScalingGroup.SystemDiskPerformanceLevel = d.Get("system_disk_performance_level").(string)
+	}
+
 	if d.HasChange("image_id") {
 		update = true
 		args.ScalingGroup.ImageId = d.Get("image_id").(string)
@@ -528,6 +545,7 @@ func resourceAlicloudCSNodePoolRead(d *schema.ResourceData, meta interface{}) er
 	d.Set("security_group_id", object.SecurityGroupId)
 	d.Set("system_disk_category", object.SystemDiskCategory)
 	d.Set("system_disk_size", object.SystemDiskSize)
+	d.Set("system_disk_performance_level", object.SystemDiskPerformanceLevel)
 	d.Set("image_id", object.ImageId)
 	d.Set("node_name_mode", object.NodeNameMode)
 	d.Set("user_data", object.UserData)
@@ -688,6 +706,10 @@ func buildNodePoolArgs(d *schema.ResourceData, meta interface{}) (*cs.CreateNode
 		}
 	}
 
+	if v, ok := d.GetOk("system_disk_performance_level"); ok && v != "" {
+		creationArgs.ScalingGroup.SystemDiskPerformanceLevel = v.(string)
+	}
+
 	// set auto scaling config
 	if v, ok := d.GetOk("scaling_config"); ok {
 		if sc, ok := v.([]interface{}); len(sc) > 0 && ok {
@@ -767,6 +789,7 @@ func setNodePoolDataDisks(scalingGroup *cs.ScalingGroup, d *schema.ResourceData)
 				AutoSnapshotPolicyId: pack["auto_snapshot_policy_id"].(string),
 				KMSKeyId:             pack["kms_key_id"].(string),
 				Encrypted:            pack["encrypted"].(string),
+				PerformanceLevel:     pack["performance_Level"].(string),
 			}
 			createDataDisks = append(createDataDisks, dataDisk)
 		}
@@ -895,9 +918,10 @@ func flattenNodeDataDisksConfig(config []cs.NodePoolDataDisk) (m []map[string]in
 
 	for _, disks := range config {
 		m = append(m, map[string]interface{}{
-			"size":      disks.Size,
-			"category":  disks.Category,
-			"encrypted": disks.Encrypted,
+			"size":              disks.Size,
+			"category":          disks.Category,
+			"encrypted":         disks.Encrypted,
+			"performance_level": disks.PerformanceLevel,
 		})
 	}
 

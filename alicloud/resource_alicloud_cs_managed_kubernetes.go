@@ -96,6 +96,17 @@ func resourceAlicloudCSManagedKubernetes() *schema.Resource {
 				Optional:         true,
 				DiffSuppressFunc: csForceUpdateSuppressFunc,
 			},
+			"worker_disk_snapshot_policy": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: csForceUpdateSuppressFunc,
+			},
+			"worker_disk_performance_level": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice([]string{"PL0", "PL1", "PL3"}, false),
+				//DiffSuppressFunc: csForceUpdateSuppressFunc,
+			},
 			"worker_instance_charge_type": {
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -140,6 +151,11 @@ func resourceAlicloudCSManagedKubernetes() *schema.Resource {
 						"auto_snapshot_policy_id": {
 							Type:     schema.TypeString,
 							Optional: true,
+						},
+						"performance_level": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							DiffSuppressFunc: csForceUpdateSuppressFunc,
 						},
 					},
 				},
@@ -212,6 +228,12 @@ func resourceAlicloudCSManagedKubernetes() *schema.Resource {
 				Optional:         true,
 				Default:          false,
 				DiffSuppressFunc: csForceUpdateSuppressFunc,
+			},
+			"load_balancer_spec": {
+				Type:         schema.TypeString,
+				ForceNew:     true,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice([]string{"slb.s1.small", "slb.s2.small", "slb.s2.medium", "slb.s3.small", "slb.s3.medium", "slb.s3.large", "slb.s3.xlarge", "slb.s3.xxlarge"}, false),
 			},
 			"new_nat_gateway": {
 				Type:     schema.TypeBool,

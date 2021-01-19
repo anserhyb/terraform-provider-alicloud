@@ -139,16 +139,6 @@ func TestAccAlicloudCSManagedKubernetes_basic(t *testing.T) {
 			},
 			{
 				Config: testAccConfig(map[string]interface{}{
-					"deletion_protection": "false",
-				}),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheck(map[string]string{
-						"deletion_protection": "false",
-					}),
-				),
-			},
-			{
-				Config: testAccConfig(map[string]interface{}{
 					"maintenance_window": []map[string]string{{"enable": "true", "maintenance_time": "05:00:00Z", "duration": "5h", "weekly_period": "Monday,Thursday"}},
 				}),
 				Check: resource.ComposeTestCheckFunc(
